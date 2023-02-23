@@ -1,118 +1,184 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, {useState} from 'react';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import {StyleSheet} from 'react-native';
 
 import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+  ViroARScene,
+  ViroText,
+  ViroMaterials,
+  ViroBox,
+  Viro3DObject,
+  ViroAmbientLight,
+  ViroSpotLight,
+  ViroQuad,
+  ViroNode,
+  ViroAnimations,
+} from '@viro-community/react-viro';
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+const HelloWorldSceneAR = () => {
+  const [state, setState] = useState({
+    hasARInitialized: true,
+    text: 'Initializing AR...',
+  });
 
-function Section({children, title}: SectionProps): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
-function App(): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const _onTrackingUpdated = () => {
+    // if the state changes to "TRACKING_NORMAL" for the first time, then
+    // that means the AR session has initialized!
+    if (!state.hasARInitialized) {
+      setState({
+        hasARInitialized: true,
+        text: 'Hello World!',
+      });
+    }
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+    <ViroARScene onTrackingUpdated={_onTrackingUpdated}>
+      {/* Text to show whether or not the AR system has initialized yet, see ViroARScene's onTrackingInitialized*/}
+      <ViroText
+        text={state.text}
+        scale={[0.5, 0.5, 0.5]}
+        position={[0, 0, -1]}
+        style={styles.helloWorldTextStyle}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
 
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+      <ViroBox
+        position={[0, -0.5, -1]}
+        animation={{name: 'rotate', run: true, loop: true}}
+        scale={[0.3, 0.3, 0.1]}
+        materials={['grid']}
+      />
+
+      <ViroAmbientLight color={'#aaaaaa'} influenceBitMask={1} />
+
+      <ViroSpotLight
+        innerAngle={5}
+        outerAngle={90}
+        direction={[0, -1, -0.2]}
+        position={[0, 3, 1]}
+        color="#aaaaaa"
+        castsShadow={true}
+      />
+
+      {/* Node that contains a light, an object and a surface to catch its shadow
+          notice that the dragType is "FixedToWorld" so the object can be dragged
+          along real world surfaces and points. */}
+      <ViroNode
+        position={[-0.5, -0.5, -0.5]}
+        dragType="FixedToWorld"
+        onDrag={() => {}}>
+        {/* Spotlight to cast light on the object and a shadow on the surface, see
+            the Viro documentation for more info on lights & shadows */}
+        <ViroSpotLight
+          innerAngle={5}
+          outerAngle={45}
+          direction={[0, -1, -0.2]}
+          position={[0, 3, 0]}
+          color="#ffffff"
+          castsShadow={true}
+          influenceBitMask={2}
+          shadowMapSize={2048}
+          shadowNearZ={2}
+          shadowFarZ={5}
+          shadowOpacity={0.7}
+        />
+
+        <Viro3DObject
+          source={require('./res/emoji_smile/emoji_smile.vrx')}
+          position={[0, 0.2, 0]}
+          scale={[0.2, 0.2, 0.2]}
+          type="VRX"
+          lightReceivingBitMask={3}
+          shadowCastingBitMask={2}
+          transformBehaviors={['billboardY']}
+          resources={[
+            require('./res/emoji_smile/emoji_smile_diffuse.png'),
+            require('./res/emoji_smile/emoji_smile_specular.png'),
+            require('./res/emoji_smile/emoji_smile_normal.png'),
+          ]}
+        />
+
+        <ViroQuad
+          rotation={[-90, 0, 0]}
+          width={0.5}
+          height={0.5}
+          // arShadowReceiver={true}
+          lightReceivingBitMask={2}
+        />
+      </ViroNode>
+
+      {/* Node that contains a light, an object and a surface to catch its shadow
+        notice that the dragType is "FixedToWorld" so the object can be dragged
+        along real world surfaces and points. */}
+      <ViroNode
+        position={[0.5, -0.5, -0.5]}
+        dragType="FixedToWorld"
+        onDrag={() => {}}>
+        {/* Spotlight to cast light on the object and a shadow on the surface, see
+            the Viro documentation for more info on lights & shadows */}
+        <ViroSpotLight
+          innerAngle={5}
+          outerAngle={45}
+          direction={[0, -1, -0.2]}
+          position={[0, 3, 0]}
+          color="#ffffff"
+          castsShadow={true}
+          influenceBitMask={4}
+          shadowMapSize={2048}
+          shadowNearZ={2}
+          shadowFarZ={5}
+          shadowOpacity={0.7}
+        />
+
+        <Viro3DObject
+          source={require('./res/object_soccerball/object_soccer_ball.vrx')}
+          position={[0, 0.15, 0]}
+          scale={[0.3, 0.3, 0.3]}
+          type="VRX"
+          lightReceivingBitMask={5}
+          shadowCastingBitMask={4}
+          transformBehaviors={['billboardY']}
+          resources={[
+            require('./res/object_soccerball/object_soccer_ball_diffuse.png'),
+            require('./res/object_soccerball/object_soccer_ball_normal.png'),
+            require('./res/object_soccerball/object_soccer_ball_specular.png'),
+          ]}
+        />
+        <ViroQuad
+          rotation={[-90, 0, 0]}
+          width={0.5}
+          height={0.5}
+          // arShadowReceiver={true}
+          lightReceivingBitMask={4}
+        />
+      </ViroNode>
+    </ViroARScene>
+  );
+};
+
+var styles = StyleSheet.create({
+  helloWorldTextStyle: {
+    fontFamily: 'Arial',
+    fontSize: 30,
+    color: '#ffffff',
+    textAlignVertical: 'center',
+    textAlign: 'center',
   },
 });
 
-export default App;
+ViroMaterials.createMaterials({
+  grid: {
+    diffuseTexture: require('./res/grid_bg.jpg'),
+  },
+});
+
+ViroAnimations.registerAnimations({
+  rotate: {
+    properties: {
+      rotateY: '+=90',
+    },
+    duration: 250, //.25 seconds
+  },
+});
+
+export default HelloWorldSceneAR;
