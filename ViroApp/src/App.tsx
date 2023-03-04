@@ -13,18 +13,28 @@ import {
   ViroQuad,
   ViroNode,
   ViroAnimations,
+  ViroTrackingStateConstants,
+  ViroTrackingState,
+  ViroTrackingReason,
+  ViroARSceneNavigator,
 } from '@viro-community/react-viro';
 
 const HelloWorldSceneAR = () => {
   const [state, setState] = useState({
-    hasARInitialized: true,
+    hasARInitialized: false,
     text: 'Initializing AR...',
   });
 
-  const _onTrackingUpdated = () => {
+  const onTrackingUpdated = (
+    eventState: ViroTrackingState,
+    _: ViroTrackingReason,
+  ) => {
     // if the state changes to "TRACKING_NORMAL" for the first time, then
     // that means the AR session has initialized!
-    if (!state.hasARInitialized) {
+    if (
+      !state.hasARInitialized &&
+      eventState === ViroTrackingStateConstants.TRACKING_NORMAL
+    ) {
       setState({
         hasARInitialized: true,
         text: 'Hello World!',
@@ -33,7 +43,7 @@ const HelloWorldSceneAR = () => {
   };
 
   return (
-    <ViroARScene onTrackingUpdated={_onTrackingUpdated}>
+    <ViroARScene onTrackingUpdated={onTrackingUpdated}>
       {/* Text to show whether or not the AR system has initialized yet, see ViroARScene's onTrackingInitialized*/}
       <ViroText
         text={state.text}
@@ -156,7 +166,7 @@ const HelloWorldSceneAR = () => {
   );
 };
 
-var styles = StyleSheet.create({
+const styles = StyleSheet.create({
   helloWorldTextStyle: {
     fontFamily: 'Arial',
     fontSize: 30,
@@ -181,4 +191,14 @@ ViroAnimations.registerAnimations({
   },
 });
 
-export default HelloWorldSceneAR;
+const ViroCodeSamplesSceneNavigator = () => {
+  return (
+    <ViroARSceneNavigator
+      initialScene={{
+        scene: HelloWorldSceneAR,
+      }}
+    />
+  );
+};
+
+export default ViroCodeSamplesSceneNavigator;
